@@ -10,119 +10,133 @@ export default function CustomMcpPage() {
         <div className="mb-16">
           <div className="flex items-center gap-6 mb-8">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-4xl text-white shadow-lg">
-              ⚙️
+              🛠️
             </div>
             <div>
-              <h1 className="text-5xl font-bold text-slate-900 mb-2">Custom MCP Servers</h1>
-              <p className="text-xl text-slate-600">Build SQL-powered MCP servers with Databricks</p>
+              <h1 className="text-5xl font-bold text-slate-900 mb-2">Hands-On: Custom MCP Server</h1>
+              <p className="text-xl text-slate-600">Build your own SQL-powered MCP server right here!</p>
             </div>
           </div>
 
           <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-8 border-2 border-orange-100 mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Production-Ready MCP Server Template</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">✨ Workshop Setup Complete!</h2>
             <p className="text-lg text-slate-700 leading-relaxed">
-              Use the official Databricks MCP server template to build custom SQL-powered tools that integrate
-              seamlessly with Cursor IDE, Databricks AI Playground, and any MCP-compatible client.
+              Your workshop setup has already configured a custom MCP server template in the
+              <code className="bg-orange-200 px-2 py-1 rounded mx-2">custom-mcp-template/</code>
+              directory. Let's build your own SQL tools and deploy them!
             </p>
           </div>
 
-          <InfoBox type="info" title="What you&apos;ll learn">
+          <InfoBox type="success" title="🎉 You already have everything set up!">
             <ul className="space-y-2 mt-3">
-              <li>• Deploy a production-ready MCP server template</li>
-              <li>• Create custom SQL tools for your business logic</li>
-              <li>• Integrate with Cursor IDE for development workflows</li>
-              <li>• Connect to Databricks AI Playground for data analysis</li>
-              <li>• Manage authentication and deployment on Databricks Apps</li>
+              <li>• ✅ Custom MCP server template configured for you</li>
+              <li>• ✅ Your personal Databricks App deployed</li>
+              <li>• ✅ Local development environment ready</li>
+              <li>• ✅ SQL warehouse and sample data accessible</li>
+              <li>• ⚡ Time to build your own MCP tools!</li>
             </ul>
           </InfoBox>
         </div>
 
-        <WorkshopStep number={1} title="Create Your MCP Server from Template">
+        <WorkshopStep number={1} title="Explore Your Custom MCP Server Template">
           <p className="text-lg text-slate-700 leading-relaxed mb-6">
-            Start by creating your own MCP server repository from the official Databricks template.
-            This template includes SQL warehouse integration, authentication, and deployment scripts.
+            Your workshop setup has already created a custom MCP server template in your local directory.
+            Let's explore what's been set up for you and understand the structure.
           </p>
 
           <CodeBlock
             language="bash"
-            title="Create Repository from Template"
-            code={`# Option 1: Use GitHub CLI (recommended)
-gh repo create my-databricks-mcp --template databricks-solutions/custom-mcp-databricks-app --private
+            title="Explore Your MCP Template"
+            code={`# Navigate to your custom MCP template
+cd custom-mcp-template
 
-# Option 2: Use the GitHub web interface
-# Visit: https://github.com/databricks-solutions/custom-mcp-databricks-app
-# Click "Use this template" → "Create a new repository"`}
+# See what's been configured for you
+ls -la
+
+# Check your personalized server configuration
+cat config.yaml
+
+# View your environment setup
+cat .env.local`}
           />
 
-          <InfoBox type="tip" title="Template Features">
-            The template includes FastMCP framework, SQL warehouse tools, OAuth authentication,
-            deployment scripts, and comprehensive testing utilities out of the box.
+          <InfoBox type="success" title="✨ What's Already Set Up">
+            <ul className="space-y-2 mt-3">
+              <li>• FastMCP framework with SQL warehouse integration</li>
+              <li>• Your personalized server name and configuration</li>
+              <li>• Authentication setup using your Databricks credentials</li>
+              <li>• Sample SQL tools for querying your workshop data</li>
+              <li>• Deployment scripts for Databricks Apps</li>
+            </ul>
           </InfoBox>
         </WorkshopStep>
 
-        <WorkshopStep number={2} title="Clone and Setup Locally">
+        <WorkshopStep number={2} title="Examine the Existing SQL Tools">
           <p className="text-lg text-slate-700 leading-relaxed mb-6">
-            Clone your new repository and run the interactive setup to configure authentication
-            and server settings.
+            The template already includes powerful SQL tools that work with your workshop data.
+            Let's look at what's available and understand how they work.
           </p>
 
           <CodeBlock
             language="bash"
-            title="Local Setup"
-            code={`# Clone your repository
-git clone https://github.com/YOUR-USERNAME/my-databricks-mcp.git
-cd my-databricks-mcp
+            title="Explore the Existing Tools"
+            code={`# Look at the existing SQL tools
+cd custom-mcp-template
+cat server/tools.py
 
-# Run interactive setup (configures auth, server name, dependencies)
-./setup.sh
-
-# This creates .env.local with your Databricks configuration:
-# DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
-# DATABRICKS_SQL_WAREHOUSE_ID=your-warehouse-id
-# SERVER_NAME=your-custom-server-name`}
+# Check what sample data is available in your catalog
+cat ../setup/setup_sample_data.py`}
           />
 
-          <InfoBox type="warning" title="Prerequisites">
-            Make sure you have the Databricks CLI installed and configured: <code>pip install databricks-cli && databricks configure</code>
+          <InfoBox type="info" title="📊 Built-in SQL Tools">
+            Your template includes tools like:
+            <ul className="mt-3 space-y-1">
+              <li>• <code>execute_dbsql</code> - Execute any SQL query</li>
+              <li>• <code>list_warehouses</code> - Show available SQL warehouses</li>
+              <li>• <code>list_dbfs_files</code> - Browse files in DBFS</li>
+              <li>• <code>health</code> - Check server connection</li>
+            </ul>
           </InfoBox>
         </WorkshopStep>
 
-        <WorkshopStep number={3} title="Add Custom SQL Tools">
+        <WorkshopStep number={3} title="Create Your Custom Business Tools">
           <p className="text-lg text-slate-700 leading-relaxed mb-6">
-            The template comes with built-in SQL tools. Add your own business-specific tools by
-            extending the <code>server/tools.py</code> file with custom functions.
+            Now let's add custom SQL tools that work with your workshop data. We'll create tools
+            that analyze the sample products, customers, and sales data.
           </p>
 
           <CodeBlock
             language="python"
-            title="server/tools.py - Add Custom Tools"
-            code={`# Add this to your server/tools.py file
+            title="Add a Daily Sales Tool"
+            code={`# Open custom-mcp-template/server/tools.py and add this function:
+
 @mcp_server.tool
-def get_daily_revenue(date: str, catalog: str = "main", schema: str = "analytics") -> dict:
-    """Get daily revenue metrics for a specific date.
+def get_daily_sales_summary(limit: int = 10) -> dict:
+    """Get a summary of recent sales from your workshop data.
 
     Args:
-        date: Date in YYYY-MM-DD format
-        catalog: Catalog name (default: main)
-        schema: Schema name (default: analytics)
+        limit: Number of recent sales to show (default: 10)
     """
     try:
-        w = WorkspaceClient(
-            host=os.environ.get('DATABRICKS_HOST'),
-            token=os.environ.get('DATABRICKS_TOKEN')
-        )
-
+        w = get_workspace_client()
         warehouse_id = os.environ.get('DATABRICKS_SQL_WAREHOUSE_ID')
+
+        # Use your personal workshop catalog
+        catalog_name = os.environ.get('WORKSHOP_CATALOG', 'mcp_workshop_default')
 
         query = f"""
         SELECT
-            DATE(order_timestamp) as date,
-            COUNT(*) as total_orders,
-            SUM(order_amount) as total_revenue,
-            AVG(order_amount) as avg_order_value
-        FROM {catalog}.{schema}.orders
-        WHERE DATE(order_timestamp) = '{date}'
-        GROUP BY DATE(order_timestamp)
+            s.sale_id,
+            s.sale_date,
+            c.customer_name,
+            p.product_name,
+            s.quantity,
+            s.revenue
+        FROM {catalog_name}.default.sales s
+        JOIN {catalog_name}.default.customers c ON s.customer_id = c.customer_id
+        JOIN {catalog_name}.default.products p ON s.product_id = p.product_id
+        ORDER BY s.sale_date DESC
+        LIMIT {limit}
         """
 
         result = w.statement_execution.execute_statement(
@@ -132,94 +146,75 @@ def get_daily_revenue(date: str, catalog: str = "main", schema: str = "analytics
         )
 
         if result.result and result.result.data_array:
-            row = result.result.data_array[0]
+            sales = []
+            for row in result.result.data_array:
+                sales.append({
+                    'sale_id': row[0],
+                    'sale_date': row[1],
+                    'customer_name': row[2],
+                    'product_name': row[3],
+                    'quantity': row[4],
+                    'revenue': float(row[5])
+                })
+
             return {
                 'success': True,
                 'data': {
-                    'date': row[0],
-                    'total_orders': row[1],
-                    'total_revenue': float(row[2]),
-                    'avg_order_value': float(row[3])
+                    'recent_sales': sales,
+                    'total_sales': len(sales)
                 }
             }
 
-        return {'success': True, 'data': {'message': 'No data for this date'}}
+        return {'success': True, 'data': {'message': 'No sales found'}}
 
     except Exception as e:
         return {'success': False, 'error': str(e)}`}
           />
 
-          <CodeBlock
-            language="python"
-            title="Add Customer Analysis Tool"
-            code={`@mcp_server.tool
-def analyze_customer_segments(months: int = 6) -> dict:
-    """Analyze customer segments based on purchase behavior.
-
-    Args:
-        months: Number of months to analyze (default: 6)
-    """
-    query = f"""
-    WITH customer_metrics AS (
-        SELECT
-            customer_id,
-            COUNT(*) as order_count,
-            SUM(order_amount) as total_spent,
-            AVG(order_amount) as avg_order,
-            MAX(order_timestamp) as last_order
-        FROM main.analytics.orders
-        WHERE order_timestamp >= CURRENT_DATE - INTERVAL {months} MONTH
-        GROUP BY customer_id
-    )
-    SELECT
-        CASE
-            WHEN total_spent > 1000 THEN 'High Value'
-            WHEN total_spent > 500 THEN 'Medium Value'
-            ELSE 'Low Value'
-        END as segment,
-        COUNT(*) as customer_count,
-        AVG(total_spent) as avg_lifetime_value
-    FROM customer_metrics
-    GROUP BY segment
-    ORDER BY avg_lifetime_value DESC
-    """
-
-    # Execute using the same pattern as above...
-    # Returns customer segment analysis`}
-          />
+          <InfoBox type="tip" title="💡 Using Your Workshop Data">
+            This tool queries YOUR personal workshop data using your catalog name. The workshop setup
+            created sample products, customers, and sales data just for you!
+          </InfoBox>
         </WorkshopStep>
 
-        <WorkshopStep number={4} title="Test Locally with Development Server">
+        <WorkshopStep number={4} title="Test Your MCP Server Locally">
           <p className="text-lg text-slate-700 leading-relaxed mb-6">
-            Start your MCP server locally for development and testing. The template includes
-            hot-reload and comprehensive testing scripts.
+            Let's start your custom MCP server locally and test that your new tools work with
+            your workshop data.
           </p>
 
           <CodeBlock
             language="bash"
-            title="Local Development"
-            code={`# Start development server with hot reload
+            title="Start Your MCP Server"
+            code={`# Navigate to your MCP template directory
+cd custom-mcp-template
+
+# Start the development server (this includes hot-reload!)
 ./watch.sh
 
-# Server starts at http://localhost:8000
-# MCP endpoint available at http://localhost:8000/mcp/
-
-# Test your tools directly
-curl -X POST http://localhost:8000/mcp/ \\
-  -H "Content-Type: application/json" \\
-  -d '{"jsonrpc": "2.0", "id": "test", "method": "tools/list"}'`}
+# Your server will be available at:
+# - HTTP homepage: http://localhost:8000
+# - MCP endpoint: http://localhost:8000/mcp/`}
           />
 
           <CodeBlock
             language="bash"
-            title="Test Your Custom Tools"
-            code={`# Test the MCP server with included testing scripts
-./claude_scripts/test_local_mcp_curl.sh     # HTTP tests
-./claude_scripts/test_local_mcp_proxy.sh    # MCP protocol tests
+            title="Test Your New Sales Tool"
+            code={`# Test that your tools are available
+curl -X POST http://localhost:8000/mcp/ \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc": "2.0", "id": "test", "method": "tools/list"}'
 
-# Launch web-based MCP Inspector for visual testing
-./claude_scripts/inspect_local_mcp.sh       # Opens browser interface`}
+# Test your custom sales tool
+curl -X POST http://localhost:8000/mcp/ \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc": "2.0", "id": "test", "method": "tools/call", "params": {"name": "get_daily_sales_summary", "arguments": {"limit": 5}}}'`}
           />
+
+          <InfoBox type="success" title="🎉 Your MCP Server is Running!">
+            If you see your sales data in the response, congratulations! Your custom MCP server
+            is successfully querying your workshop data.
+          </InfoBox>
         </WorkshopStep>
 
         <WorkshopStep number={5} title="Deploy to Databricks Apps">

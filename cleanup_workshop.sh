@@ -71,18 +71,27 @@ cleanup_participant() {
     if databricks bundle run cleanup_workshop_resources -t dev \
         --var="participant_prefix=${PARTICIPANT_PREFIX}" \
         --var="workshop_catalog=${WORKSHOP_CATALOG}" \
-        --var="app_name=${WORKSHOP_APP_NAME}" 2>/dev/null; then
+        --var="app_name=${WORKSHOP_APP_NAME}" \
+        --var="mcp_server_name=${MCP_SERVER_NAME}" 2>/dev/null; then
         print_status "Cleanup job completed for ${prefix}"
     else
         print_warning "Cleanup job failed or doesn't exist for ${prefix}"
     fi
 
-    # Try to delete the app
-    print_progress "Removing Databricks App: ${WORKSHOP_APP_NAME}..."
+    # Try to delete the workshop app
+    print_progress "Removing workshop app: ${WORKSHOP_APP_NAME}..."
     if databricks apps delete "$WORKSHOP_APP_NAME" --yes 2>/dev/null; then
         print_status "Removed app: ${WORKSHOP_APP_NAME}"
     else
         print_warning "App not found or already deleted: ${WORKSHOP_APP_NAME}"
+    fi
+
+    # Try to delete the custom MCP server app
+    print_progress "Removing custom MCP server: ${MCP_SERVER_NAME}..."
+    if databricks apps delete "$MCP_SERVER_NAME" --yes 2>/dev/null; then
+        print_status "Removed MCP server: ${MCP_SERVER_NAME}"
+    else
+        print_warning "MCP server not found or already deleted: ${MCP_SERVER_NAME}"
     fi
 
     # Try to drop the catalog (requires elevated permissions)
@@ -117,7 +126,8 @@ list_participants() {
 
             echo -e "${CYAN}  $((count + 1)). ${NC}Prefix: ${prefix} | Name: ${PARTICIPANT_NAME}"
             echo -e "     Catalog: ${WORKSHOP_CATALOG}"
-            echo -e "     App: ${WORKSHOP_APP_NAME}"
+            echo -e "     Workshop App: ${WORKSHOP_APP_NAME}"
+            echo -e "     MCP Server: ${MCP_SERVER_NAME}"
             echo -e "     Created: ${CREATED_DATE}"
             echo ""
 
@@ -167,17 +177,28 @@ cleanup_all() {
         done || print_info "No orphaned catalogs found or jq not available"
     fi
 
-    # Clean up any remaining workshop apps
+    # Clean up any remaining workshop apps and MCP servers
     print_progress "Checking for orphaned workshop apps..."
     if command -v databricks &> /dev/null; then
+        # Clean up workshop apps
         databricks apps list --output json 2>/dev/null | jq -r '.[].name' 2>/dev/null | grep "^mcp-workshop-app-" | while read app; do
-            print_warning "Found orphaned app: ${app}"
+            print_warning "Found orphaned workshop app: ${app}"
             if databricks apps delete "$app" --yes 2>/dev/null; then
                 print_status "Removed orphaned app: ${app}"
             else
                 print_warning "Could not remove app: ${app}"
             fi
-        done || print_info "No orphaned apps found or jq not available"
+        done || print_info "No orphaned workshop apps found or jq not available"
+
+        # Clean up MCP server apps
+        databricks apps list --output json 2>/dev/null | jq -r '.[].name' 2>/dev/null | grep "^databricks-mcp-" | while read app; do
+            print_warning "Found orphaned MCP server: ${app}"
+            if databricks apps delete "$app" --yes 2>/dev/null; then
+                print_status "Removed orphaned MCP server: ${app}"
+            else
+                print_warning "Could not remove MCP server: ${app}"
+            fi
+        done || print_info "No orphaned MCP servers found or jq not available"
     fi
 
     print_status "Cleanup completed! Processed ${cleaned_count} participant configuration(s)."

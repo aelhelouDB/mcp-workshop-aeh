@@ -20,6 +20,10 @@ variables:
     description: "Workshop catalog name"
     default: "mcp_workshop"
 
+  mcp_server_name:
+    description: "Custom MCP server name"
+    default: "databricks-mcp-workshop"
+
 targets:
   # Development target for testing
   dev:
@@ -35,16 +39,30 @@ targets:
       app_name: "mcp-workshop-app"
 
 resources:
-  # Databricks App for the workshop
+  # Databricks Apps for the workshop
   apps:
+    # Workshop instructional app
     mcp_workshop_app:
       name: ${var.app_name}
       description: "Interactive workshop for learning Databricks MCP (Model Context Protocol)"
-      
-      # The name of the Databricks App. This should match the name in your databricks.yml file for the 'dev' target.
-      source_code_path: "/Workspace/Users/jai.behl@databricks.com/mcp-workshop-app-dev"
-      
+
+      # Frontend workshop content
+      source_code_path: "/Workspace/Users/${workspace.current_user.userName}/${var.app_name}"
+
       # Permissions - allow all workspace users to access the workshop
+      permissions:
+        - level: CAN_USE
+          group_name: "users"
+
+    # Custom MCP server for hands-on learning
+    mcp_server_app:
+      name: ${var.mcp_server_name}
+      description: "Custom MCP server for workshop participant: ${var.participant_prefix}"
+
+      # Custom MCP server code
+      source_code_path: "/Workspace/Users/${workspace.current_user.userName}/${var.mcp_server_name}"
+
+      # Permissions - participant-specific
       permissions:
         - level: CAN_USE
           group_name: "users"
@@ -54,7 +72,7 @@ resources:
     setup_workshop_resources:
       name: "Setup MCP Workshop Resources"
       description: "Sets up Unity Catalog resources needed for the workshop"
-      
+
       tasks:
         - task_key: "create_catalog"
           notebook_task:
@@ -69,6 +87,15 @@ resources:
             notebook_path: "./setup/setup_sample_data.py"
             base_parameters:
               catalog_name: "${var.workshop_catalog}"
+
+        - task_key: "deploy_mcp_template"
+          depends_on:
+            - task_key: "setup_sample_data"
+          notebook_task:
+            notebook_path: "./setup/deploy_mcp_template.py"
+            base_parameters:
+              participant_prefix: "${var.participant_prefix}"
+              mcp_server_name: "${var.mcp_server_name}"
 
     cleanup_workshop_resources:
       name: "Cleanup MCP Workshop Resources"

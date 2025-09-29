@@ -319,11 +319,12 @@ EOF
     print_header "🚀 Deploying Your Workshop Environment"
     print_info "This will create your personal workshop resources..."
 
-    print_progress "Deploying Databricks bundle..."
+    print_progress "Deploying Databricks bundle (workshop app + MCP server)..."
     if databricks bundle deploy -t dev \
         --var="participant_prefix=${CLEAN_PREFIX}" \
         --var="workshop_catalog=${WORKSHOP_CATALOG}" \
-        --var="app_name=${WORKSHOP_APP_NAME}"; then
+        --var="app_name=${WORKSHOP_APP_NAME}" \
+        --var="mcp_server_name=${MCP_SERVER_NAME}"; then
         print_status "Bundle deployed successfully"
     else
         print_error "Bundle deployment failed"
@@ -331,13 +332,48 @@ EOF
     fi
 
     print_progress "Setting up your workshop catalog and sample data..."
-    if databricks bundle run setup_resources -t dev \
+    if databricks bundle run setup_workshop_resources -t dev \
         --var="participant_prefix=${CLEAN_PREFIX}" \
         --var="workshop_catalog=${WORKSHOP_CATALOG}" \
         --var="app_name=${WORKSHOP_APP_NAME}"; then
         print_status "Workshop resources created successfully"
     else
         print_warning "Resource setup encountered issues, but continuing..."
+    fi
+
+    # Set up custom MCP server template
+    print_header "⚙️ Setting Up Your Custom MCP Server"
+    print_info "Configuring the custom MCP server template for hands-on learning..."
+
+    if [ -d "custom-mcp-template" ]; then
+        cd custom-mcp-template
+
+        # Run the MCP-specific setup
+        if [ -f "setup_workshop_mcp.sh" ]; then
+            print_progress "Configuring custom MCP server template..."
+            print_info "Parameters: ${CLEAN_PREFIX}, ${MCP_SERVER_NAME}, ${DATABRICKS_HOST}"
+            ./setup_workshop_mcp.sh "${CLEAN_PREFIX}" "${MCP_SERVER_NAME}" "${DATABRICKS_HOST}"
+            print_status "Custom MCP server template configured"
+        else
+            print_warning "MCP setup script not found, setting up manually..."
+
+            # Manual setup fallback
+            cat > config.yaml << EOF
+# MCP Server Configuration for ${PARTICIPANT_NAME}
+servername: ${MCP_SERVER_NAME}
+EOF
+
+            cat > .env.local << EOF
+# Workshop MCP Server Configuration for ${PARTICIPANT_NAME}
+DATABRICKS_HOST=${DATABRICKS_HOST}
+SERVER_NAME=${MCP_SERVER_NAME}
+EOF
+            print_status "Basic MCP configuration created"
+        fi
+
+        cd ..
+    else
+        print_warning "Custom MCP template directory not found"
     fi
 
     # Install frontend dependencies
