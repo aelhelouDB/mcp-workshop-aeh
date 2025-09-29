@@ -7,7 +7,7 @@ Interactive workshop for learning Databricks Model Context Protocol (MCP) with h
 **For workshop participants** - Get your own isolated environment with one command:
 
 ```bash
-git clone [<your-repo-url>](https://github.com/jai-behl/mcp-workshop.git)
+git clone https://github.com/jai-behl/mcp-workshop.git
 cd mcp-workshop
 ./setup.sh
 ```
