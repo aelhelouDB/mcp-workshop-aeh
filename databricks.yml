@@ -7,10 +7,18 @@ variables:
   workshop_name:
     description: "Name of the MCP workshop"
     default: "Databricks MCP Workshop"
-  
+
   app_name:
     description: "Name of the Databricks App"
     default: "mcp-workshop-app"
+
+  participant_prefix:
+    description: "Participant prefix for resource naming"
+    default: "default"
+
+  workshop_catalog:
+    description: "Workshop catalog name"
+    default: "mcp_workshop"
 
 targets:
   # Development target for testing
@@ -52,15 +60,15 @@ resources:
           notebook_task:
             notebook_path: "./setup/create_workshop_catalog.py"
             base_parameters:
-              catalog_name: "mcp_workshop"
-        
+              catalog_name: "${var.workshop_catalog}"
+
         - task_key: "setup_sample_data"
           depends_on:
             - task_key: "create_catalog"
           notebook_task:
             notebook_path: "./setup/setup_sample_data.py"
             base_parameters:
-              catalog_name: "mcp_workshop"
+              catalog_name: "${var.workshop_catalog}"
 
     cleanup_workshop_resources:
       name: "Cleanup MCP Workshop Resources"
@@ -71,7 +79,7 @@ resources:
           notebook_task:
             notebook_path: "./setup/cleanup_workshop_resources.py"
             base_parameters:
-              catalog_name: "mcp_workshop"
+              catalog_name: "${var.workshop_catalog}"
 
 include:
   - resources/*.yml

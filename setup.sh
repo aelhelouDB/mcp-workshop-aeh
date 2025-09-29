@@ -54,8 +54,10 @@ prompt_with_default() {
 # Function to clean username for resource naming
 clean_username() {
     local username="$1"
+    # Take first part before @ or . and clean it
+    local first_part=$(echo "$username" | cut -d'@' -f1 | cut -d'.' -f1)
     # Convert to lowercase, replace spaces and hyphens with underscores, remove special chars
-    echo "$username" | tr '[:upper:]' '[:lower:]' | tr ' -' '__' | sed 's/[^a-z0-9_]//g' | sed 's/__*/_/g' | sed 's/^_//' | sed 's/_$//'
+    echo "$first_part" | tr '[:upper:]' '[:lower:]' | tr ' -' '__' | sed 's/[^a-z0-9_]//g' | sed 's/__*/_/g' | sed 's/^_//' | sed 's/_$//'
 }
 
 # Function to update or add a value in .env.local
@@ -300,82 +302,28 @@ main() {
 
     print_status "Configuration saved to .env.local"
 
-    # Create user-specific databricks.yml
-    print_progress "Creating personalized DABS configuration..."
-
-    # Create a user-specific databricks bundle config
-    cat > "databricks.${CLEAN_PREFIX}.yml" << EOF
-# Databricks Asset Bundle Configuration for ${PARTICIPANT_NAME}
-bundle:
-  name: mcp-workshop-${CLEAN_PREFIX}
-
-variables:
-  participant_prefix:
-    description: "Participant prefix for resource naming"
-    default: "${CLEAN_PREFIX}"
-
-  workshop_catalog:
-    description: "Workshop catalog name"
-    default: "${WORKSHOP_CATALOG}"
-
-  app_name:
-    description: "Databricks App name"
-    default: "${WORKSHOP_APP_NAME}"
-
-targets:
-  dev:
-    mode: development
-    default: true
-
-resources:
-  # Databricks App for this participant
-  apps:
-    workshop_app:
-      name: \${var.app_name}
-      description: "MCP Workshop instance for ${PARTICIPANT_NAME}"
-      source_code_path: "/Workspace/Users/\${workspace.current_user.userName}/\${var.app_name}"
-
-  # Jobs for workshop setup
-  jobs:
-    setup_resources:
-      name: "Setup Workshop Resources - ${PARTICIPANT_NAME}"
-      description: "Sets up Unity Catalog resources for ${PARTICIPANT_NAME}"
-
-      tasks:
-        - task_key: "create_catalog"
-          notebook_task:
-            notebook_path: "./setup/create_workshop_catalog.py"
-            base_parameters:
-              catalog_name: "\${var.workshop_catalog}"
-
-        - task_key: "setup_sample_data"
-          depends_on:
-            - task_key: "create_catalog"
-          notebook_task:
-            notebook_path: "./setup/setup_sample_data.py"
-            base_parameters:
-              catalog_name: "\${var.workshop_catalog}"
-
-    cleanup_resources:
-      name: "Cleanup Workshop Resources - ${PARTICIPANT_NAME}"
-      description: "Cleans up resources for ${PARTICIPANT_NAME}"
-
-      tasks:
-        - task_key: "cleanup_resources"
-          notebook_task:
-            notebook_path: "./setup/cleanup_workshop_resources.py"
-            base_parameters:
-              catalog_name: "\${var.workshop_catalog}"
+    # Store participant info for later cleanup reference
+    cat > ".participant_${CLEAN_PREFIX}.info" << EOF
+# Workshop participant information
+PARTICIPANT_NAME="${PARTICIPANT_NAME}"
+PARTICIPANT_PREFIX="${CLEAN_PREFIX}"
+WORKSHOP_CATALOG="${WORKSHOP_CATALOG}"
+WORKSHOP_APP_NAME="${WORKSHOP_APP_NAME}"
+MCP_SERVER_NAME="${MCP_SERVER_NAME}"
+CREATED_DATE="$(date)"
 EOF
 
-    print_status "Created personalized DABS config: databricks.${CLEAN_PREFIX}.yml"
+    print_status "Saved participant configuration for cleanup reference"
 
     # Deploy workshop resources
     print_header "🚀 Deploying Your Workshop Environment"
     print_info "This will create your personal workshop resources..."
 
     print_progress "Deploying Databricks bundle..."
-    if databricks bundle deploy -t dev --var-file "databricks.${CLEAN_PREFIX}.yml"; then
+    if databricks bundle deploy -t dev \
+        --var="participant_prefix=${CLEAN_PREFIX}" \
+        --var="workshop_catalog=${WORKSHOP_CATALOG}" \
+        --var="app_name=${WORKSHOP_APP_NAME}"; then
         print_status "Bundle deployed successfully"
     else
         print_error "Bundle deployment failed"
@@ -383,7 +331,10 @@ EOF
     fi
 
     print_progress "Setting up your workshop catalog and sample data..."
-    if databricks bundle run setup_resources -t dev --var-file "databricks.${CLEAN_PREFIX}.yml"; then
+    if databricks bundle run setup_resources -t dev \
+        --var="participant_prefix=${CLEAN_PREFIX}" \
+        --var="workshop_catalog=${WORKSHOP_CATALOG}" \
+        --var="app_name=${WORKSHOP_APP_NAME}"; then
         print_status "Workshop resources created successfully"
     else
         print_warning "Resource setup encountered issues, but continuing..."
@@ -424,7 +375,7 @@ EOF
     echo ""
     echo -e "${CYAN}🔧 Configuration Files Created:${NC}"
     echo "   • .env.local - Your workshop configuration"
-    echo "   • databricks.${CLEAN_PREFIX}.yml - Your DABS config"
+    echo "   • .participant_${CLEAN_PREFIX}.info - Participant info for cleanup"
     echo "   • frontend/.env.local - Frontend configuration"
     echo ""
     echo -e "${GREEN}Happy learning with Databricks MCP! 🚀${NC}"

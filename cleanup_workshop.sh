@@ -56,42 +56,48 @@ cleanup_participant() {
 
     print_progress "Cleaning up resources for participant: ${prefix}"
 
-    # Check if participant config exists
-    local config_file="databricks.${prefix}.yml"
-    if [ ! -f "$config_file" ]; then
-        print_warning "No config found for participant: ${prefix}"
+    # Check if participant info exists
+    local info_file=".participant_${prefix}.info"
+    if [ ! -f "$info_file" ]; then
+        print_warning "No participant info found for: ${prefix}"
         return 0
     fi
 
+    # Load participant configuration
+    source "$info_file"
+
     # Run cleanup job if it exists
     print_progress "Running cleanup job for ${prefix}..."
-    if databricks bundle run cleanup_resources -t dev --var-file "$config_file" 2>/dev/null; then
+    if databricks bundle run cleanup_workshop_resources -t dev \
+        --var="participant_prefix=${PARTICIPANT_PREFIX}" \
+        --var="workshop_catalog=${WORKSHOP_CATALOG}" \
+        --var="app_name=${WORKSHOP_APP_NAME}" 2>/dev/null; then
         print_status "Cleanup job completed for ${prefix}"
     else
         print_warning "Cleanup job failed or doesn't exist for ${prefix}"
     fi
 
     # Try to delete the app
-    print_progress "Removing Databricks App: ${app_name}..."
-    if databricks apps delete "$app_name" --yes 2>/dev/null; then
-        print_status "Removed app: ${app_name}"
+    print_progress "Removing Databricks App: ${WORKSHOP_APP_NAME}..."
+    if databricks apps delete "$WORKSHOP_APP_NAME" --yes 2>/dev/null; then
+        print_status "Removed app: ${WORKSHOP_APP_NAME}"
     else
-        print_warning "App not found or already deleted: ${app_name}"
+        print_warning "App not found or already deleted: ${WORKSHOP_APP_NAME}"
     fi
 
     # Try to drop the catalog (requires elevated permissions)
-    print_progress "Attempting to drop catalog: ${catalog}..."
-    if databricks sql query "DROP CATALOG IF EXISTS ${catalog} CASCADE" 2>/dev/null; then
-        print_status "Dropped catalog: ${catalog}"
+    print_progress "Attempting to drop catalog: ${WORKSHOP_CATALOG}..."
+    if databricks sql query "DROP CATALOG IF EXISTS ${WORKSHOP_CATALOG} CASCADE" 2>/dev/null; then
+        print_status "Dropped catalog: ${WORKSHOP_CATALOG}"
     else
-        print_warning "Could not drop catalog (may require admin permissions): ${catalog}"
+        print_warning "Could not drop catalog (may require admin permissions): ${WORKSHOP_CATALOG}"
         print_info "You can manually drop it from the Databricks UI or with admin credentials"
     fi
 
-    # Remove local config files
-    if [ -f "$config_file" ]; then
-        rm "$config_file"
-        print_status "Removed config file: ${config_file}"
+    # Remove local info file
+    if [ -f "$info_file" ]; then
+        rm "$info_file"
+        print_status "Removed participant info file: ${info_file}"
     fi
 }
 
@@ -101,17 +107,18 @@ list_participants() {
     echo ""
 
     local count=0
-    for config_file in databricks.*.yml; do
-        if [ -f "$config_file" ] && [[ "$config_file" != "databricks.yml" ]]; then
+    for info_file in .participant_*.info; do
+        if [ -f "$info_file" ]; then
             # Extract prefix from filename
-            prefix=$(echo "$config_file" | sed 's/databricks\.//' | sed 's/\.yml//')
+            prefix=$(echo "$info_file" | sed 's/\.participant_//' | sed 's/\.info//')
 
-            # Try to extract participant name from the config
-            participant_name=$(grep "# Databricks Asset Bundle Configuration for " "$config_file" | sed 's/# Databricks Asset Bundle Configuration for //' || echo "Unknown")
+            # Load participant info
+            source "$info_file"
 
-            echo -e "${CYAN}  ${count}. ${NC}Prefix: ${prefix} | Name: ${participant_name}"
-            echo -e "     Catalog: mcp_workshop_${prefix}"
-            echo -e "     App: mcp-workshop-app-${prefix}"
+            echo -e "${CYAN}  $((count + 1)). ${NC}Prefix: ${prefix} | Name: ${PARTICIPANT_NAME}"
+            echo -e "     Catalog: ${WORKSHOP_CATALOG}"
+            echo -e "     App: ${WORKSHOP_APP_NAME}"
+            echo -e "     Created: ${CREATED_DATE}"
             echo ""
 
             ((count++))
@@ -120,7 +127,7 @@ list_participants() {
 
     if [ $count -eq 0 ]; then
         print_info "No workshop participant configurations found."
-        print_info "Participants are identified by 'databricks.<prefix>.yml' files."
+        print_info "Participants are identified by '.participant_<prefix>.info' files."
     else
         print_info "Found ${count} participant configuration(s)."
     fi
@@ -138,9 +145,9 @@ cleanup_all() {
     fi
 
     local cleaned_count=0
-    for config_file in databricks.*.yml; do
-        if [ -f "$config_file" ] && [[ "$config_file" != "databricks.yml" ]]; then
-            prefix=$(echo "$config_file" | sed 's/databricks\.//' | sed 's/\.yml//')
+    for info_file in .participant_*.info; do
+        if [ -f "$info_file" ]; then
+            prefix=$(echo "$info_file" | sed 's/\.participant_//' | sed 's/\.info//')
             cleanup_participant "$prefix"
             ((cleaned_count++))
         fi
