@@ -1,0 +1,29 @@
+---
+description: "How to deploy the Next.js application to Databricks Apps with the Python backend and automated setup jobs."
+---
+
+# Databricks App Deployment Guide
+
+This project demonstrates how to deploy a Next.js application as a static site served by a Python (FastAPI) backend on Databricks Apps. The entire process is managed by a Databricks Asset Bundle.
+
+## Project Structure
+
+- **`frontend/`**: Contains the Next.js application.
+  - It is configured for static export in [`frontend/next.config.mjs`](mdc:frontend/next.config.mjs).
+- **`backend/`**: Contains the Python FastAPI server.
+  - [`backend/app.py`](mdc:backend/app.py) serves the static files from the `frontend` build.
+  - [`backend/app.yaml`](mdc:backend/app.yaml) defines the command to run the application.
+- **`setup/`**: Contains Python scripts run as Databricks Jobs to provision workshop resources.
+- **[`databricks.yml`](mdc:databricks.yml)**: The main Databricks Asset Bundle configuration file. It defines the Databricks App and the setup/cleanup jobs.
+- **[`deploy.sh`](mdc:deploy.sh)**: A shell script that automates the entire build and deployment process.
+
+## Deployment Process
+
+The deployment is handled by the [`deploy.sh`](mdc:deploy.sh) script, which performs the following steps:
+
+1.  **Builds the Next.js frontend:** Runs `npm run build` in the `frontend` directory to generate a static version of the application in the `frontend/out` directory.
+2.  **Packages the backend:** Copies the static frontend assets into the `backend/static` directory and prepares the Python server for deployment.
+3.  **Uploads to Databricks:** Uses `databricks workspace import-dir` to upload the packaged application to the Databricks workspace.
+4.  **Deploys the app:** Uses `databricks apps deploy` to deploy the application from the workspace.
+
+The setup of the workshop's data and resources is handled by jobs defined in [`databricks.yml`](mdc:databricks.yml). These jobs are configured to run on Serverless compute for efficiency.

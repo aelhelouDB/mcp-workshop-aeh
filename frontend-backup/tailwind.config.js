@@ -1,0 +1,19 @@
+import typography from '@tailwindcss/typography'
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [
+    typography,
+  ],
+}

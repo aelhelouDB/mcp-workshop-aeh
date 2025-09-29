@@ -1,0 +1,77 @@
+# Databricks Asset Bundle Configuration for MCP Workshop
+bundle:
+  name: mcp-workshop
+  
+variables:
+  # Workshop configuration variables
+  workshop_name:
+    description: "Name of the MCP workshop"
+    default: "Databricks MCP Workshop"
+  
+  app_name:
+    description: "Name of the Databricks App"
+    default: "mcp-workshop-app"
+
+targets:
+  # Development target for testing
+  dev:
+    mode: development
+    default: true
+    variables:
+      app_name: "mcp-workshop-app-dev"
+    
+  # Production target for workshop deployment
+  prod:
+    mode: production
+    variables:
+      app_name: "mcp-workshop-app"
+
+resources:
+  # Databricks App for the workshop
+  apps:
+    mcp_workshop_app:
+      name: ${var.app_name}
+      description: "Interactive workshop for learning Databricks MCP (Model Context Protocol)"
+      
+      # The name of the Databricks App. This should match the name in your databricks.yml file for the 'dev' target.
+      source_code_path: "/Workspace/Users/jai.behl@databricks.com/mcp-workshop-app-dev"
+      
+      # Permissions - allow all workspace users to access the workshop
+      permissions:
+        - level: CAN_USE
+          group_name: "users"
+
+  # Jobs for workshop setup and teardown
+  jobs:
+    setup_workshop_resources:
+      name: "Setup MCP Workshop Resources"
+      description: "Sets up Unity Catalog resources needed for the workshop"
+      
+      tasks:
+        - task_key: "create_catalog"
+          notebook_task:
+            notebook_path: "./setup/create_workshop_catalog.py"
+            base_parameters:
+              catalog_name: "mcp_workshop"
+        
+        - task_key: "setup_sample_data"
+          depends_on:
+            - task_key: "create_catalog"
+          notebook_task:
+            notebook_path: "./setup/setup_sample_data.py"
+            base_parameters:
+              catalog_name: "mcp_workshop"
+
+    cleanup_workshop_resources:
+      name: "Cleanup MCP Workshop Resources"
+      description: "Cleans up Unity Catalog resources created for the workshop"
+      
+      tasks:
+        - task_key: "cleanup_resources"
+          notebook_task:
+            notebook_path: "./setup/cleanup_workshop_resources.py"
+            base_parameters:
+              catalog_name: "mcp_workshop"
+
+include:
+  - resources/*.yml
