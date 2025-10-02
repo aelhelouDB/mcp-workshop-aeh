@@ -351,6 +351,8 @@ main() {
             update_env_value "DATABRICKS_TOKEN" "$DATABRICKS_TOKEN"
 
             # Test PAT authentication
+            # Clear conflicting profile variables to ensure clean PAT auth
+            unset DATABRICKS_CONFIG_PROFILE
             export DATABRICKS_HOST="$DATABRICKS_HOST"
             export DATABRICKS_TOKEN="$DATABRICKS_TOKEN"
 
@@ -405,6 +407,11 @@ main() {
             fi
 
             # Test profile authentication
+            # Clear all conflicting environment variables to ensure clean profile auth
+            unset DATABRICKS_HOST DATABRICKS_TOKEN DATABRICKS_AUTH_TYPE
+            unset DATABRICKS_CLIENT_ID DATABRICKS_CLIENT_SECRET DATABRICKS_AZURE_CLIENT_ID
+            export DATABRICKS_CONFIG_PROFILE
+            
             if ! test_databricks_connection "$DATABRICKS_CONFIG_PROFILE"; then
                 print_error "Profile '$DATABRICKS_CONFIG_PROFILE' not found or invalid."
                 print_info "Configure it with: databricks configure --profile $DATABRICKS_CONFIG_PROFILE"
