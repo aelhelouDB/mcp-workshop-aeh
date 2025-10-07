@@ -356,7 +356,7 @@ RETURN
   FROM mcp_workshop_{prefix}.default.customers c
   LEFT JOIN mcp_workshop_{prefix}.default.sales s ON c.customer_id = s.customer_id
   LEFT JOIN mcp_workshop_{prefix}.default.products p ON s.product_id = p.product_id
-  WHERE c.customer_id = customer_id
+  WHERE c.customer_id = s.customer_id
   GROUP BY c.customer_id, c.customer_name, c.email, c.region, c.signup_date;`}
               />
             </div>
