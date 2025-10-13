@@ -425,14 +425,40 @@ main() {
     # Generate user-specific configuration
     print_header "⚙️ Generating Workshop Configuration"
 
-    # Create user-specific resource names
-    WORKSHOP_CATALOG="mcp_workshop_${CLEAN_PREFIX}"
+    # Ask about catalog setup
+    echo ""
+    echo -e "${BLUE}❓${NC} Do you want to:"
+    echo "   1. Create a new catalog (default - requires catalog creation permissions)"
+    echo "   2. Use an existing catalog (recommended for serverless workspaces)"
+    read -p "$(echo -e "${BLUE}Choose option (1/2) [1]:${NC} ")" catalog_option
+    
+    catalog_option=${catalog_option:-1}
+    
+    if [[ "$catalog_option" == "2" ]]; then
+        echo ""
+        print_info "Checking available catalogs in your workspace..."
+        if databricks catalogs list --output table 2>/dev/null; then
+            echo ""
+        else
+            print_warning "Unable to list catalogs automatically"
+        fi
+        echo ""
+        read -p "$(echo -e "${BLUE}Enter catalog name to use:${NC} ")" WORKSHOP_CATALOG
+        CREATE_CATALOG="false"
+        print_info "Will use existing catalog: ${WORKSHOP_CATALOG}"
+    else
+        WORKSHOP_CATALOG="mcp_workshop_${CLEAN_PREFIX}"
+        CREATE_CATALOG="true"
+        print_info "Will create new catalog: ${WORKSHOP_CATALOG}"
+    fi
+    echo ""
 
     # Update configuration
     update_env_value "PARTICIPANT_NAME" "$PARTICIPANT_NAME" "Workshop participant information"
     update_env_value "PARTICIPANT_PREFIX" "$CLEAN_PREFIX"
     update_env_value "WORKSHOP_CATALOG" "$WORKSHOP_CATALOG" "Workshop resources"
     update_env_value "WORKSHOP_APP_NAME" "$WORKSHOP_APP_NAME"
+    update_env_value "CREATE_CATALOG" "$CREATE_CATALOG" "Catalog creation mode"
 
     print_status "Configuration saved to .env.local"
 
@@ -443,6 +469,7 @@ PARTICIPANT_NAME="${PARTICIPANT_NAME}"
 PARTICIPANT_PREFIX="${CLEAN_PREFIX}"
 WORKSHOP_CATALOG="${WORKSHOP_CATALOG}"
 WORKSHOP_APP_NAME="${WORKSHOP_APP_NAME}"
+CREATE_CATALOG="${CREATE_CATALOG}"
 CREATED_DATE="$(date)"
 EOF
 
@@ -503,7 +530,8 @@ EOF
         
         if databricks bundle deploy -t dev --profile "$DATABRICKS_CONFIG_PROFILE" \
             --var="participant_prefix=${CLEAN_PREFIX}" \
-            --var="workshop_catalog=${WORKSHOP_CATALOG}"; then
+            --var="workshop_catalog=${WORKSHOP_CATALOG}" \
+            --var="create_catalog=${CREATE_CATALOG}"; then
             print_status "Bundle deployed successfully"
         else
             print_error "Bundle deployment failed with profile authentication"
@@ -519,7 +547,8 @@ EOF
         # Use PAT authentication (default)
         if databricks bundle deploy -t dev \
             --var="participant_prefix=${CLEAN_PREFIX}" \
-            --var="workshop_catalog=${WORKSHOP_CATALOG}"; then
+            --var="workshop_catalog=${WORKSHOP_CATALOG}" \
+            --var="create_catalog=${CREATE_CATALOG}"; then
             print_status "Bundle deployed successfully"
         else
             print_error "Bundle deployment failed with PAT authentication"

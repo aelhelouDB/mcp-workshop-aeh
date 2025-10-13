@@ -16,6 +16,10 @@ variables:
     description: "Workshop catalog name"
     default: "mcp_workshop"
 
+  create_catalog:
+    description: "Whether to create catalog or use existing (true/false)"
+    default: "true"
+
 targets:
   # Development target for testing
   dev:
@@ -39,6 +43,7 @@ resources:
             notebook_path: "./setup/create_workshop_catalog.py"
             base_parameters:
               catalog_name: "${var.workshop_catalog}"
+              create_catalog: "${var.create_catalog}"
 
         - task_key: "setup_sample_data"
           depends_on:
