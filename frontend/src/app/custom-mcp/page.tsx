@@ -301,30 +301,31 @@ databricks bundle run custom-mcp-server
           </div>
         </WorkshopStep>
 
-        <WorkshopStep number={5} title="Add Your First Databricks SDK Tool">
+        <WorkshopStep number={5} title="Examine the Databricks SDK Tools">
           <div className="space-y-6">
             <p className="text-lg text-slate-700 leading-relaxed">
-              Now let's make this MCP server actually useful by connecting it to Databricks! We'll add tools that can list clusters, query data, and more.
+              Great news! Your MCP server template already includes powerful Databricks SDK tools. Let's examine them to understand 
+              the patterns for building MCP tools that query Databricks resources.
             </p>
 
             <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
               <h3 className="text-xl font-bold text-slate-900 mb-4">🎯 What You'll Learn</h3>
               <ul className="space-y-2 text-slate-700">
-                <li>• How to add the Databricks SDK as a dependency</li>
+                <li>• How the Databricks SDK is already integrated as a dependency</li>
                 <li>• The pattern for creating MCP tools that call Databricks APIs</li>
                 <li>• How authentication works (spoiler: it's automatic in Databricks Apps!)</li>
                 <li>• Best practices for tool design: clear names, good docstrings, error handling</li>
               </ul>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900">Step 1: Add the Databricks SDK Dependency</h3>
+            <h3 className="text-xl font-bold text-slate-900">The Databricks SDK Dependency</h3>
             <p className="text-slate-700">
-              Open <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">pyproject.toml</code> and add <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">databricks-sdk</code> to the dependencies:
+              Open <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">pyproject.toml</code> and you'll see <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">databricks-sdk</code> already in the dependencies:
             </p>
 
             <CodeBlock
               language="toml"
-              title="pyproject.toml - Add this line"
+              title="pyproject.toml - Already configured"
               code={`[project]
 name = "custom-server"
 version = "0.1.0"
@@ -333,7 +334,7 @@ dependencies = [
     "fastapi>=0.115.12",
     "mcp[cli]>=1.10.0",
     "uvicorn>=0.34.2",
-    "databricks-sdk>=0.42.0",  # ← Add this!
+    "databricks-sdk>=0.42.0",  # ← Already included!
 ]`}
             />
 
@@ -345,18 +346,15 @@ dependencies = [
               </p>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 2: Add Authentication Helper</h3>
+            <h3 className="text-xl font-bold text-slate-900 mt-8">The Authentication Helper</h3>
             <p className="text-slate-700">
-              In <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">src/custom_server/app.py</code>, add this helper function at the top:
+              In <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">src/custom_server/app.py</code>, find the <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">get_workspace_client()</code> function:
             </p>
 
             <CodeBlock
               language="python"
-              title="src/custom_server/app.py - Add after imports"
-              code={`import os
-from databricks.sdk import WorkspaceClient
-
-def get_workspace_client() -> WorkspaceClient:
+              title="src/custom_server/app.py - Authentication helper (lines 34-43)"
+              code={`def get_workspace_client() -> WorkspaceClient:
     """Get an authenticated Databricks workspace client.
     
     This uses environment variables or Databricks Apps authentication.
@@ -379,14 +377,14 @@ def get_workspace_client() -> WorkspaceClient:
               </ul>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 3: Add Your First Databricks Tool</h3>
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Example Tool: list_clusters</h3>
             <p className="text-slate-700">
-              Now add a tool that lists clusters. Add this to your app.py:
+              Scroll down in <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">app.py</code> to see the <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">list_clusters</code> tool (around line 46):
             </p>
 
             <CodeBlock
               language="python"
-              title="src/custom_server/app.py - Add this tool"
+              title="src/custom_server/app.py - Examine this tool (lines 46-80)"
               code={`@mcp.tool()
 def list_clusters(status: str = "RUNNING") -> dict:
     """List Databricks compute clusters filtered by status.
@@ -425,7 +423,7 @@ def list_clusters(status: str = "RUNNING") -> dict:
             />
 
             <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">🎓 Breaking Down This Pattern</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">🎓 Understanding the MCP Tool Pattern</h3>
               <div className="space-y-3 text-sm text-slate-700">
                 <div>
                   <p className="font-bold">@mcp.tool() decorator</p>
@@ -450,51 +448,35 @@ def list_clusters(status: str = "RUNNING") -> dict:
               </div>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 4: Test Your Tool Locally</h3>
-            
-            <CodeBlock
-              language="bash"
-              title="Terminal - Test your new tool"
-              code={`# Install the new dependency
-cd custom-mcp-template
-uv sync
-
-# Set environment variables for local testing
-export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
-export DATABRICKS_TOKEN="your-pat-token"
-
-# Start the server (uv run uses the .venv automatically)
-uv run uvicorn custom_server.app:app --reload --host 0.0.0.0 --port 8000
-
-# In another terminal, test with curl
-curl -X POST http://localhost:8000/mcp/tools/call \\
-  -H "Content-Type: application/json" \\
-  -d '{"name": "list_clusters", "arguments": {"status": "RUNNING"}}'`}
-            />
-
-            <InfoBox type="success" title="You Did It!">
-              <p className="mb-2">You just created a Databricks-powered MCP tool! This tool can now be called by:</p>
+            <InfoBox type="info" title="Key Takeaway">
+              <p className="mb-2">Notice the pattern: Every MCP tool in this server follows the same structure:</p>
               <ul className="space-y-1 ml-4 text-sm">
-                <li>• Claude Desktop (when connected to your MCP server)</li>
-                <li>• Cursor IDE (with MCP configuration)</li>
-                <li>• Any MCP-compatible AI assistant</li>
-                <li>• Your own Python scripts using the MCP client library</li>
+                <li>1. <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">@mcp.tool()</code> decorator</li>
+                <li>2. Clear docstring explaining what it does</li>
+                <li>3. Get authenticated client with <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">get_workspace_client()</code></li>
+                <li>4. Call Databricks SDK methods</li>
+                <li>5. Return structured data with success/error handling</li>
               </ul>
+              <p className="text-sm mt-3">You'll use this exact pattern when building your own tool in Step 7!</p>
             </InfoBox>
           </div>
         </WorkshopStep>
 
-        <WorkshopStep number={6} title="Add More Useful Tools">
+        <WorkshopStep number={6} title="Understand the SQL Tools">
           <div className="space-y-6">
             <p className="text-lg text-slate-700 leading-relaxed">
-              Now that you understand the pattern, let's add two more powerful tools: one to list SQL warehouses and another to execute SQL queries.
+              Now let's examine two more powerful tools already in your MCP server: one that lists SQL warehouses and another that executes SQL queries. 
+              These show you how MCP tools can interact with Databricks' data layer.
             </p>
 
-            <h3 className="text-xl font-bold text-slate-900">Tool 2: List SQL Warehouses</h3>
+            <h3 className="text-xl font-bold text-slate-900">Tool 2: list_warehouses</h3>
+            <p className="text-slate-700 mb-4">
+              Find this tool in <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">app.py</code> (around line 84):
+            </p>
 
             <CodeBlock
               language="python"
-              title="src/custom_server/app.py - Add this tool"
+              title="src/custom_server/app.py - Examine this tool (lines 84-113)"
               code={`@mcp.tool()
 def list_warehouses() -> dict:
     """List all SQL warehouses in the Databricks workspace.
@@ -528,14 +510,22 @@ def list_warehouses() -> dict:
         return {'success': False, 'error': str(e)}`}
             />
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Tool 3: Execute SQL Queries</h3>
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <p className="text-sm text-slate-700">
+                <strong>💡 Notice:</strong> This follows the same pattern as <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">list_clusters</code>, 
+                but uses <code className="bg-blue-100 px-1 py-0.5 rounded text-xs">w.warehouses.list()</code> instead. 
+                The SDK makes it easy to query different Databricks resources with consistent APIs!
+              </p>
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Tool 3: execute_dbsql</h3>
             <p className="text-slate-700 mb-4">
-              This is the most powerful tool - it lets AI assistants query your data!
+              This is the most powerful tool - it lets AI assistants query your data! Find it in <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">app.py</code> (around line 117):
             </p>
 
             <CodeBlock
               language="python"
-              title="src/custom_server/app.py - Add this tool"
+              title="src/custom_server/app.py - Examine this tool (lines 117-176)"
               code={`@mcp.tool()
 def execute_dbsql(
     query: str,
@@ -614,10 +604,212 @@ def execute_dbsql(
                 <strong>Pro tip:</strong> In production, consider adding query validation, logging, and rate limiting!
               </p>
             </div>
+
+            <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200 mt-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-3">🎯 Ready to Build Your Own?</h3>
+              <p className="text-slate-700 mb-3">
+                You've now examined three different MCP tools that query Databricks:
+              </p>
+              <ul className="space-y-2 text-slate-700">
+                <li>• <code className="bg-green-100 px-1 py-0.5 rounded text-sm">list_clusters</code> - Query compute resources</li>
+                <li>• <code className="bg-green-100 px-1 py-0.5 rounded text-sm">list_warehouses</code> - Query SQL endpoints</li>
+                <li>• <code className="bg-green-100 px-1 py-0.5 rounded text-sm">execute_dbsql</code> - Run SQL queries</li>
+              </ul>
+              <p className="text-slate-700 mt-3">
+                In the next step, you'll build your own tool from scratch using the same pattern!
+              </p>
+            </div>
           </div>
         </WorkshopStep>
 
-        <WorkshopStep number={7} title="Deploy to Databricks Apps">
+        <WorkshopStep number={7} title="Build Your Own Tool: Unity Catalog Integration">
+          <div className="space-y-6">
+            <p className="text-lg text-slate-700 leading-relaxed">
+              Time to get your hands dirty! You'll now <strong>build your own MCP tool from scratch</strong> that connects to Unity Catalog, 
+              Databricks' data governance layer. This tool will explore the catalog structure created during your workshop setup.
+            </p>
+
+            <div className="bg-orange-50 rounded-xl p-6 border-2 border-orange-200">
+              <h3 className="text-lg font-bold text-slate-900 mb-3">🎯 Your Task</h3>
+              <p className="text-slate-700 mb-3">
+                You've examined existing tools. Now <strong>you'll write the code yourself</strong> for a <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">list_schemas</code> tool 
+                that queries your workshop catalog.
+              </p>
+              <ul className="space-y-2 text-slate-700">
+                <li>• ✍️ Add the tool code to <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">app.py</code></li>
+                <li>• 🧪 Test it locally with your workshop catalog</li>
+                <li>• 📊 See it discover the schemas you created during setup</li>
+              </ul>
+            </div>
+
+            <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">🎓 Understanding Unity Catalog</h3>
+              <p className="text-slate-700 mb-4">
+                Unity Catalog organizes data in a <strong>3-level namespace</strong>:
+              </p>
+              <div className="bg-white rounded-lg p-4 border border-purple-200 mb-4">
+                <code className="text-sm font-mono">catalog.schema.table</code>
+              </div>
+              <ul className="space-y-2 text-slate-700">
+                <li>• <strong>Catalog</strong>: Top-level container (e.g., <code className="bg-purple-100 px-1 py-0.5 rounded text-sm">mcp_workshop_john_doe</code>)</li>
+                <li>• <strong>Schema</strong>: Database within a catalog (e.g., <code className="bg-purple-100 px-1 py-0.5 rounded text-sm">default</code>)</li>
+                <li>• <strong>Table</strong>: Actual data tables (e.g., <code className="bg-purple-100 px-1 py-0.5 rounded text-sm">products</code>, <code className="bg-purple-100 px-1 py-0.5 rounded text-sm">sales</code>)</li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+              <h3 className="text-lg font-bold text-slate-900 mb-3">🔗 Connecting to Your Workshop Setup</h3>
+              <p className="text-slate-700 mb-3">
+                Remember when you ran <code className="bg-blue-100 px-1 py-0.5 rounded text-sm">./setup.sh</code>? It created your personal catalog!
+              </p>
+              <div className="bg-white rounded-lg p-4 border border-blue-200 font-mono text-sm">
+                <div className="text-slate-600">Your Workshop Resources:</div>
+                <div className="mt-2 ml-2">
+                  <div>📁 <strong>mcp_workshop_&lt;your_prefix&gt;</strong> (catalog)</div>
+                  <div className="ml-4">└── 📂 <strong>default</strong> (schema)</div>
+                  <div className="ml-8">├── 📊 products (100 rows)</div>
+                  <div className="ml-8">├── 📊 customers (500 rows)</div>
+                  <div className="ml-8">└── 📊 sales (1000 rows)</div>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 mt-3">
+                The tool you're building will let AI assistants discover this structure!
+              </p>
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 1: Add the list_schemas Tool</h3>
+            <p className="text-slate-700 mb-4">
+              Open <code className="bg-orange-200 px-1.5 py-0.5 rounded font-mono">src/custom_server/app.py</code> and <strong>add this new tool</strong> after the existing tools 
+              (after <code className="bg-orange-100 px-1 py-0.5 rounded text-sm">execute_dbsql</code>, around line 177):
+            </p>
+
+            <CodeBlock
+              language="python"
+              title="src/custom_server/app.py - ADD this tool yourself!"
+              code={`@mcp.tool()
+def list_schemas(catalog_name: str) -> dict:
+    """List all schemas in a Unity Catalog catalog.
+    
+    Args:
+        catalog_name: Name of the catalog to list schemas from
+    
+    Returns:
+        Dictionary with schema information including name, catalog, owner, and comment
+    
+    Example:
+        list_schemas("mcp_workshop_john_doe") -> Shows all schemas in your workshop catalog
+    """
+    try:
+        w = get_workspace_client()
+        schemas = []
+        
+        for schema in w.schemas.list(catalog_name=catalog_name):
+            schemas.append({
+                'name': schema.name,
+                'full_name': schema.full_name,
+                'catalog': schema.catalog_name,
+                'owner': schema.owner,
+                'comment': schema.comment or 'No description'
+            })
+        
+        return {
+            'success': True,
+            'schemas': schemas,
+            'count': len(schemas),
+            'message': f'Found {len(schemas)} schema(s) in catalog {catalog_name}'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}`}
+            />
+
+            <div className="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
+              <h3 className="text-lg font-bold text-slate-900 mb-3">📚 Understanding the Schema API</h3>
+              <div className="space-y-3 text-sm text-slate-700">
+                <div>
+                  <p className="font-bold">w.schemas.list(catalog_name)</p>
+                  <p>Iterates through all schemas in the catalog. The SDK automatically handles pagination and permissions!</p>
+                </div>
+                <div>
+                  <p className="font-bold">schema.full_name</p>
+                  <p>Returns the complete path like <code className="bg-yellow-100 px-1 py-0.5 rounded text-xs">mcp_workshop_john_doe.default</code></p>
+                </div>
+                <div>
+                  <p className="font-bold">Automatic permission filtering</p>
+                  <p>Users only see schemas they have the <code className="bg-yellow-100 px-1 py-0.5 rounded text-xs">USE_SCHEMA</code> privilege on. Security is built-in!</p>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 2: Test Locally with Your Workshop Catalog</h3>
+            <p className="text-slate-700 mb-4">
+              Now test your new tool locally with the catalog created during your workshop setup:
+            </p>
+
+            <CodeBlock
+              language="bash"
+              title="Terminal - Test with your workshop catalog"
+              code={`# Get your workshop catalog name from the setup
+cd custom-mcp-template
+source ../.env.local
+echo "Your workshop catalog: $WORKSHOP_CATALOG"
+
+# Make sure the server is running
+uv run uvicorn custom_server.app:app --reload --host 0.0.0.0 --port 8000
+
+# In another terminal, test the tool (replace with your actual catalog name)
+curl -X POST http://localhost:8000/mcp/tools/call \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "list_schemas", "arguments": {"catalog_name": "mcp_workshop_john_doe"}}'`}
+            />
+
+            <InfoBox type="success" title="Expected Result">
+              <p className="mb-2">You should see output like this:</p>
+              <CodeBlock
+                language="json"
+                code={`{
+  "success": true,
+  "schemas": [
+    {
+      "name": "default",
+      "full_name": "mcp_workshop_john_doe.default",
+      "catalog": "mcp_workshop_john_doe",
+      "owner": "your_email@example.com",
+      "comment": "Default schema for workshop tables and functions"
+    }
+  ],
+  "count": 1,
+  "message": "Found 1 schema(s) in catalog mcp_workshop_john_doe"
+}`}
+              />
+              <p className="text-sm mt-3">
+                This confirms your workshop catalog is set up correctly with the <strong>default</strong> schema containing your sample data!
+              </p>
+            </InfoBox>
+
+            <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+              <h3 className="text-lg font-bold text-slate-900 mb-3">💡 Why This Tool Matters</h3>
+              <ul className="space-y-2 text-slate-700">
+                <li>• <strong>Data Discovery:</strong> AI assistants can explore available schemas before querying</li>
+                <li>• <strong>Governance:</strong> Respects Unity Catalog permissions automatically</li>
+                <li>• <strong>Context Building:</strong> Combined with <code className="bg-green-100 px-1 py-0.5 rounded text-xs">execute_dbsql</code>, 
+                AI can fully understand your data landscape</li>
+                <li>• <strong>Workshop Connection:</strong> This directly queries the resources created during setup!</li>
+              </ul>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mt-6">
+              <p className="text-sm text-slate-700">
+                <strong>📖 Learn More:</strong> The Databricks SDK provides similar APIs for <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">w.tables</code>, 
+                <code className="bg-slate-100 px-1 py-0.5 rounded text-xs ml-1">w.catalogs</code>, and more. Check the 
+                <a href="https://docs.databricks.com/en/dev-tools/sdk-python.html" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                  Databricks SDK documentation
+                </a> to explore!
+              </p>
+            </div>
+          </div>
+        </WorkshopStep>
+
+        <WorkshopStep number={8} title="Deploy to Databricks Apps">
           <div className="space-y-6">
             <p className="text-lg text-slate-700 leading-relaxed">
               Now let's deploy your MCP server so your team can use it! The template includes helper scripts that make deployment simple.
@@ -633,21 +825,35 @@ def execute_dbsql(
               </ul>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900">Step 1: Deploy with One Command</h3>
+            <h3 className="text-xl font-bold text-slate-900">Step 1: Build and Deploy</h3>
 
             <CodeBlock
               language="bash"
-              title="Terminal - Deploy your MCP server"
+              title="Terminal - Build and deploy your MCP server"
               code={`cd custom-mcp-template
 
-# Run the deployment script
-./deploy.sh
+# Get your participant prefix from setup
+source ../.env.local
+echo "Your prefix: $PARTICIPANT_PREFIX"
 
-# What it does:
-# 1. Builds Python wheel with uv
-# 2. Runs databricks bundle deploy
-# 3. Shows you the results`}
+# Build the Python wheel
+uv build --wheel
+
+# Deploy with your unique app name
+databricks bundle deploy --var="participant_prefix=$PARTICIPANT_PREFIX"
+
+# Your app will be named: mcp-custom-server-<your-prefix>`}
             />
+
+            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <p className="text-sm text-slate-700 mb-2">
+                <strong>💡 Why this naming convention?</strong>
+              </p>
+              <ul className="text-sm text-slate-700 space-y-1 ml-4">
+                <li>• <strong>Starts with <code className="bg-yellow-100 px-1 py-0.5 rounded text-xs">mcp-</code>:</strong> Required for apps to appear in the Databricks MCP playground</li>
+                <li>• <strong>Participant prefix:</strong> Ensures unique names (e.g., <code className="bg-yellow-100 px-1 py-0.5 rounded text-xs">mcp-custom-server-jai</code>) to avoid conflicts in shared workspaces</li>
+              </ul>
+            </div>
 
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <p className="text-sm text-slate-700">
@@ -655,19 +861,22 @@ def execute_dbsql(
               </p>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 2: Check Your App Status</h3>
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 2: Verify Deployment</h3>
 
             <CodeBlock
               language="bash"
-              title="Terminal - Check deployment status"
-              code={`./app_status.sh
+              title="Terminal - Check your app in Databricks"
+              code={`# Check the app status in your workspace
+databricks apps list | grep mcp-custom-server
+
+# Get the app URL
+databricks apps get mcp-custom-server-$PARTICIPANT_PREFIX
 
 # Output shows:
-# ✅ App found!
-# 📍 App Name: mcp-custom-server-bundles
+# ✅ App Name: mcp-custom-server-<your-prefix>
 # 🔄 State: RUNNING
-# 🌐 URL: https://your-app.databricksapps.com
-# 🔗 MCP Endpoint: https://your-app.databricksapps.com/mcp/`}
+# 🌐 URL: https://<workspace>/apps/mcp-custom-server-<your-prefix>
+# 🔗 MCP Endpoint: https://<workspace>/apps/mcp-custom-server-<your-prefix>/mcp/`}
             />
 
             <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
@@ -676,15 +885,18 @@ def execute_dbsql(
               </p>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 3: Verify It's Running</h3>
+            <h3 className="text-xl font-bold text-slate-900 mt-8">Step 3: Test the MCP Endpoint</h3>
 
             <CodeBlock
               language="bash"
-              title="Terminal - Test the endpoint"
-              code={`# Test that your MCP server responds
-curl https://your-app.databricksapps.com/
+              title="Terminal - Test your deployed server"
+              code={`# Get the app URL from the previous command
+# Then test your MCP server tools
 
-# You should see the landing page HTML`}
+# Example: List the tools available
+curl https://<workspace>/apps/mcp-custom-server-$PARTICIPANT_PREFIX/mcp/tools
+
+# You should see your list_schemas tool along with the others!`}
             />
 
             <InfoBox type="success" title="🎉 Your MCP Server is Live!">
@@ -699,7 +911,7 @@ curl https://your-app.databricksapps.com/
           </div>
         </WorkshopStep>
 
-        <WorkshopStep number={8} title="What You Built">
+        <WorkshopStep number={9} title="What You Built">
           <div className="space-y-6">
             <p className="text-lg text-slate-700 leading-relaxed">
               Congratulations! You've built a production-ready MCP server. Let's recap what you learned:
@@ -711,12 +923,19 @@ curl https://your-app.databricksapps.com/
                 <ul className="space-y-2 text-sm text-slate-700">
                   <li>• The <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">@mcp.tool()</code> decorator pattern</li>
                   <li>• How to integrate Databricks SDK</li>
-                  <li className="pl-4">- execute_dbsql</li>
-                  <li className="pl-4">- list_warehouses</li>
-                  <li>✅ <strong>Step 2:</strong> Markdown prompts</li>
-                  <li>✅ <strong>Step 3:</strong> Deployment scripts</li>
-                  <li>✅ <strong>Step 4:</strong> Workshop integration</li>
+                  <li>• Authentication with WorkspaceClient</li>
+                  <li>• Error handling and structured responses</li>
+                  <li>• Building MCP tools that query Databricks</li>
                 </ul>
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <h4 className="font-bold text-slate-900 mb-2">🛠️ Tools You Built:</h4>
+                  <ul className="space-y-1 text-sm text-slate-700">
+                    <li>• <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">list_clusters</code> - Query compute resources</li>
+                    <li>• <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">list_warehouses</code> - Discover SQL endpoints</li>
+                    <li>• <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">execute_dbsql</code> - Run SQL queries</li>
+                    <li>• <code className="bg-slate-100 px-1 py-0.5 rounded text-xs">list_schemas</code> - Explore Unity Catalog structure</li>
+                  </ul>
+                </div>
               </div>
 
               <div className="bg-white rounded-xl p-6 border-2 border-slate-200">

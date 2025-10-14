@@ -1,6 +1,11 @@
 bundle:
   name: custom-mcp-server
 
+variables:
+  participant_prefix:
+    description: "Participant prefix for unique app naming"
+    default: "default"
+
 sync:
   include:
     - .build
@@ -14,7 +19,7 @@ artifacts:
 resources:
   apps:
     custom-mcp-server:
-      name: "mcp-custom-server-bundles"
+      name: "mcp-custom-server-${var.participant_prefix}"
       description: "Custom MCP Server on Databricks Apps"
       source_code_path: ./.build
 
