@@ -70,28 +70,20 @@ cleanup_participant() {
     print_progress "Running cleanup job for ${prefix}..."
     if databricks bundle run cleanup_workshop_resources -t dev \
         --var="participant_prefix=${PARTICIPANT_PREFIX}" \
-        --var="workshop_catalog=${WORKSHOP_CATALOG}" \
-        --var="app_name=${WORKSHOP_APP_NAME}" \
-        --var="mcp_server_name=${MCP_SERVER_NAME}" 2>/dev/null; then
+        --var="workshop_catalog=${WORKSHOP_CATALOG}" 2>/dev/null; then
         print_status "Cleanup job completed for ${prefix}"
     else
         print_warning "Cleanup job failed or doesn't exist for ${prefix}"
     fi
 
-    # Try to delete the workshop app
-    print_progress "Removing workshop app: ${WORKSHOP_APP_NAME}..."
-    if databricks apps delete "$WORKSHOP_APP_NAME" --yes 2>/dev/null; then
-        print_status "Removed app: ${WORKSHOP_APP_NAME}"
-    else
-        print_warning "App not found or already deleted: ${WORKSHOP_APP_NAME}"
-    fi
-
-    # Try to delete the custom MCP server app
-    print_progress "Removing custom MCP server: ${MCP_SERVER_NAME}..."
-    if databricks apps delete "$MCP_SERVER_NAME" --yes 2>/dev/null; then
-        print_status "Removed MCP server: ${MCP_SERVER_NAME}"
-    else
-        print_warning "MCP server not found or already deleted: ${MCP_SERVER_NAME}"
+    # Try to delete the custom MCP server app (the only app we create)
+    if [ -n "${MCP_APP_NAME}" ]; then
+        print_progress "Removing custom MCP server: ${MCP_APP_NAME}..."
+        if databricks apps delete "$MCP_APP_NAME" --yes 2>/dev/null; then
+            print_status "Removed MCP server: ${MCP_APP_NAME}"
+        else
+            print_warning "MCP server not found or already deleted: ${MCP_APP_NAME}"
+        fi
     fi
 
     # Try to drop the catalog (requires elevated permissions)
@@ -126,8 +118,7 @@ list_participants() {
 
             echo -e "${CYAN}  $((count + 1)). ${NC}Prefix: ${prefix} | Name: ${PARTICIPANT_NAME}"
             echo -e "     Catalog: ${WORKSHOP_CATALOG}"
-            echo -e "     Workshop App: ${WORKSHOP_APP_NAME}"
-            echo -e "     MCP Server: ${MCP_SERVER_NAME}"
+            echo -e "     MCP Server App: ${MCP_APP_NAME}"
             echo -e "     Created: ${CREATED_DATE}"
             echo ""
 

@@ -284,7 +284,7 @@ main() {
     print_info "Your resource prefix will be: ${CLEAN_PREFIX}"
     print_info "This will create resources like:"
     print_info "  • Catalog: mcp_workshop_${CLEAN_PREFIX}"
-    print_info "  • MCP Server App: databricks-mcp-${CLEAN_PREFIX}"
+    print_info "  • Custom MCP Server App: mcp-custom-server-${CLEAN_PREFIX} (deployed separately in Step 8)"
     echo ""
 
     read -p "$(echo -e "${BLUE}❓${NC} Continue with this setup? (y/N): ")" confirm
@@ -457,7 +457,7 @@ main() {
     update_env_value "PARTICIPANT_NAME" "$PARTICIPANT_NAME" "Workshop participant information"
     update_env_value "PARTICIPANT_PREFIX" "$CLEAN_PREFIX"
     update_env_value "WORKSHOP_CATALOG" "$WORKSHOP_CATALOG" "Workshop resources"
-    update_env_value "WORKSHOP_APP_NAME" "$WORKSHOP_APP_NAME"
+    update_env_value "MCP_APP_NAME" "mcp-custom-server-${CLEAN_PREFIX}" "Custom MCP Server app name"
     update_env_value "CREATE_CATALOG" "$CREATE_CATALOG" "Catalog creation mode"
 
     print_status "Configuration saved to .env.local"
@@ -468,7 +468,7 @@ main() {
 PARTICIPANT_NAME="${PARTICIPANT_NAME}"
 PARTICIPANT_PREFIX="${CLEAN_PREFIX}"
 WORKSHOP_CATALOG="${WORKSHOP_CATALOG}"
-WORKSHOP_APP_NAME="${WORKSHOP_APP_NAME}"
+MCP_APP_NAME="mcp-custom-server-${CLEAN_PREFIX}"
 CREATE_CATALOG="${CREATE_CATALOG}"
 CREATED_DATE="$(date)"
 EOF
@@ -477,9 +477,10 @@ EOF
 
     # Deploy workshop resources
     print_header "🚀 Deploying Your Workshop Environment"
-    print_info "This will create your personal workshop resources..."
+    print_info "This will create your personal workshop resources (catalog, sample data, setup jobs)..."
+    print_info "Note: The MCP server app will be deployed separately in the workshop (Step 8)"
 
-    print_progress "Deploying Databricks bundle (MCP server)..."
+    print_progress "Deploying Databricks bundle (jobs only, no apps)..."
     
     # Ensure virtual environment is activated and environment variables are available
     if [ -f ".venv/bin/activate" ]; then
@@ -683,22 +684,26 @@ EOF
     echo ""
     echo -e "${CYAN}📋 Your Workshop Resources:${NC}"
     echo "   • Catalog: ${WORKSHOP_CATALOG}"
+    echo "   • MCP App Name (for Step 8): mcp-custom-server-${CLEAN_PREFIX}"
     echo ""
     echo -e "${CYAN}🚀 Next Steps:${NC}"
     echo "   1. Start the frontend: cd frontend && npm run dev"
     echo "   2. Visit: http://localhost:3000"
-    echo "   3. Follow the workshop to deploy your custom MCP server"
+    echo "   3. Follow Step 8 in the workshop to deploy your custom MCP server"
+    echo "   4. Deploy command: cd custom-mcp-template && databricks bundle deploy --var=\"participant_prefix=${CLEAN_PREFIX}\""
     echo ""
     echo -e "${CYAN}🔧 Configuration Files Created:${NC}"
-    echo "   • .env.local - Your workshop configuration"
+    echo "   • .env.local - Your workshop configuration (includes MCP_APP_NAME)"
     echo "   • .participant_${CLEAN_PREFIX}.info - Participant info for cleanup"
     echo "   • frontend/.env.local - Frontend configuration"
+    echo "   • custom-mcp-template/.env.local - MCP server configuration"
     echo "   • .venv/ - Python virtual environment with all dependencies"
     echo ""
     echo -e "${CYAN}💡 Important Notes:${NC}"
     echo "   • All Databricks CLI and Terraform commands are available in the virtual environment"
     echo "   • To activate manually: source .venv/bin/activate"
     echo "   • Virtual environment includes: Databricks CLI, Terraform, and Python tools"
+    echo "   • The MCP server app will be created when you run Step 8 of the workshop"
     echo ""
     echo -e "${GREEN}Happy learning with Databricks MCP! 🚀${NC}"
 
