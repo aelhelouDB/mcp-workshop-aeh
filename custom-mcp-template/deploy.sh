@@ -2,6 +2,8 @@
 
 # Deploy MCP Server to Databricks Apps
 # This script builds and deploys your custom MCP server
+source ../.env.local
+echo "PARTICIPANT_PREFIX: $PARTICIPANT_PREFIX"
 
 set -e  # Exit on error
 
@@ -78,7 +80,8 @@ echo ""
 # Start the app
 APP_NAME="mcp-custom-server-$PARTICIPANT_PREFIX_CLEAN"
 echo "🚀 Starting app: $APP_NAME..."
-databricks apps start "$APP_NAME" 2>/dev/null || true
+unset DATABRICKS_AUTH_TYPE
+databricks bundle run custom-mcp-server --var="participant_prefix=$PARTICIPANT_PREFIX_CLEAN"
 
 # Wait a moment for app to start
 sleep 3
@@ -87,14 +90,14 @@ sleep 3
 APP_URL=$(databricks apps get "$APP_NAME" --output json 2>/dev/null | grep -o '"url": "[^"]*"' | cut -d'"' -f4)
 
 echo ""
-echo "✅ App started successfully!"
+echo "✅ App deployed and started successfully!"
 echo ""
 echo "📋 App Details:"
 echo "  Name: $APP_NAME"
 if [ -n "$APP_URL" ]; then
     echo "  URL: ${APP_URL}/mcp/"
     echo ""
-    echo "🔗 MCP Connection URL (use this in AI assistants):"
+    echo "🔗 MCP Connection URL - use this in AI assistants:"
     echo "  ${APP_URL}/mcp/"
 fi
 echo ""
